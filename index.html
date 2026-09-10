@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vocal Pitch Coach</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: #fff;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 10px;
+      background: linear-gradient(45deg, #00d4ff, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #a0aec0;
+      font-size: 1.1rem;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 1024px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 30px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .control-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .mode-selector {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .mode-btn {
+      flex: 1;
+      min-width: 120px;
+      padding: 12px 20px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      background: transparent;
+      color: #fff;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+
+    .mode-btn:hover {
+      border-color: #00d4ff;
+      background: rgba(0, 212, 255, 0.1);
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(45deg, #00d4ff, #7c3aed);
+      border-color: #00d4ff;
+      color: #000;
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 15px;
+    }
+
+    button.primary {
+      flex: 1;
+      padding: 16px 30px;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(45deg, #00d4ff, #7c3aed);
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+    }
+
+    button.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 212, 255, 0.4);
+    }
+
+    button.primary:active {
+      transform: translateY(0);
+    }
+
+    button.secondary {
+      flex: 1;
+      padding: 16px 30px;
+      font-size: 1.1rem;
+      border-radius: 12px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      background: transparent;
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    button.secondary:hover {
+      border-color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.1);
+    }
+
+    .display-box {
+      text-align: center;
+      padding: 30px;
+      background: rgba(0, 212, 255, 0.05);
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    #note-display {
+      font-size: 4rem;
+      font-weight: bold;
+      color: #00d4ff;
+      margin-bottom: 10px;
+    }
+
+    #cents-display {
+      font-size: 1.5rem;
+      color: #a0aec0;
+      margin-bottom: 15px;
+    }
+
+    .in-key {
+      color: #10b981 !important;
+      text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+    }
+
+    .off-key {
+      color: #ef4444 !important;
+      text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+    }
+
+    .indicator {
+      width: 100%;
+      height: 30px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      overflow: hidden;
+      position: relative;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    #bar {
+      width: 8px;
+      height: 100%;
+      background: linear-gradient(90deg, #00d4ff, #7c3aed);
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      transition: left 0.05s ease;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
+    }
+
+    .target-zone {
+      position: absolute;
+      top: 0;
+      left: 45%;
+      width: 10%;
+      height: 100%;
+      background: rgba(16, 185, 129, 0.2);
+      border: 2px solid #10b981;
+      border-radius: 15px;
+      pointer-events: none;
+    }
+
+    .range-section {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 12px;
+    }
+
+    .range-info {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .range-item {
+      background: rgba(0, 212, 255, 0.1);
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .range-item-label {
+      color: #a0aec0;
+      font-size: 0.9rem;
+      margin-bottom: 5px;
+    }
+
+    .range-item-value {
+      font-size: 1.5rem;
+      color: #00d4ff;
+      font-weight: bold;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 400px;
+      margin-bottom: 20px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .stat-box {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 15px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    .stat-label {
+      color: #a0aec0;
+      font-size: 0.9rem;
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      color: #00d4ff;
+      font-weight: bold;
+    }
+
+    .mode-description {
+      color: #a0aec0;
+      font-size: 0.9rem;
+      margin-top: 15px;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 10px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ef4444;
+      margin-right: 10px;
+      animation: pulse 2s infinite;
+    }
+
+    .status-indicator.active {
+      background: #10b981;
+      animation: glow 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 5px #10b981; }
+      50% { box-shadow: 0 0 20px #10b981; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎤 Vocal Pitch Coach</h1>
+      <p class="subtitle">Master your vocal range and develop your unique sound</p>
+    </header>
+
+    <div class="main-grid">
+      <!-- Left Panel: Controls -->
+      <div class="card">
+        <div class="control-panel">
+          <div>
+            <h3 style="margin-bottom: 15px; font-size: 1.2rem;">Training Mode</h3>
+            <div class="mode-selector">
+              <button class="mode-btn active" data-mode="sing">🎵 Sing</button>
+              <button class="mode-btn" data-mode="scream">🔊 Scream</button>
+              <button class="mode-btn" data-mode="mixed">⚡ Mixed</button>
+            </div>
+            <div class="mode-description" id="mode-description">
+              Train your singing voice to match target notes with precision and control.
+            </div>
+          </div>
+
+          <div>
+            <h3 style="margin-bottom: 15px; font-size: 1.2rem;">Controls</h3>
+            <div class="action-buttons">
+              <button class="primary" id="startBtn">🎙️ Start Listening</button>
+              <button class="secondary" id="stopBtn" style="display: none;">⏹️ Stop</button>
+            </div>
+          </div>
+
+          <div>
+            <h3 style="margin-bottom: 15px; font-size: 1.2rem;">Vocal Range</h3>
+            <button class="primary" id="detectRangeBtn" style="background: linear-gradient(45deg, #f59e0b, #d97706); box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);">🎯 Detect My Range</button>
+            <div id="range-section" class="range-section hidden">
+              <div class="range-info">
+                <div class="range-item">
+                  <div class="range-item-label">Lowest Note</div>
+                  <div class="range-item-value" id="lowestNote">--</div>
+                </div>
+                <div class="range-item">
+                  <div class="range-item-label">Highest Note</div>
+                  <div class="range-item-value" id="highestNote">--</div>
+                </div>
+              </div>
+              <div class="range-info" style="margin-top: 10px;">
+                <div class="range-item">
+                  <div class="range-item-label">Octaves</div>
+                  <div class="range-item-value" id="rangeOctaves">--</div>
+                </div>
+                <div class="range-item">
+                  <div class="range-item-label">Voice Type</div>
+                  <div class="range-item-value" id="voiceType">--</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 style="margin-bottom: 15px; font-size: 1.2rem;">Target Voice</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+              <button class="mode-btn" data-target="chester" title="Chester Bennington - Linkin Park">Chester</button>
+              <button class="mode-btn" data-target="freddie" title="Freddie Mercury - Queen">Freddie</button>
+              <button class="mode-btn" data-target="custom" title="Custom target range">Custom</button>
+            </div>
+            <div id="target-range-display" style="margin-top: 15px; padding: 15px; background: rgba(0, 0, 0, 0.3); border-radius: 10px; text-align: center;">
+              <div style="color: #a0aec0; font-size: 0.9rem; margin-bottom: 5px;">Target Range</div>
+              <div style="font-size: 1.3rem; color: #f59e0b;"><span id="targetLow">--</span> to <span id="targetHigh">--</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Panel: Visualization -->
+      <div class="card">
+        <div style="text-align: center;">
+          <div style="margin-bottom: 20px;">
+            <span class="status-indicator" id="statusIndicator"></span>
+            <span id="statusText" style="color: #a0aec0;">Click Start to begin</span>
+          </div>
+          
+          <div class="display-box">
+            <div id="note-display">--</div>
+            <div id="cents-display">0 cents</div>
+          </div>
+
+          <div style="margin-bottom: 20px;">
+            <p style="color: #a0aec0; margin-bottom: 10px; font-size: 0.9rem;">PITCH ACCURACY</p>
+            <div class="indicator">
+              <div class="target-zone"></div>
+              <div id="bar"></div>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-box">
+              <div class="stat-label">Accuracy</div>
+              <div class="stat-value" id="accuracy">--</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Frequency</div>
+              <div class="stat-value" id="frequency">-- Hz</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Volume</div>
+              <div class="stat-value" id="volume">-- dB</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Stability</div>
+              <div class="stat-value" id="stability">--</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full Width Chart -->
+    <div class="card">
+      <h3 style="margin-bottom: 20px; font-size: 1.2rem;">📊 Pitch History</h3>
+      <div class="chart-container">
+        <canvas id="pitchChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
