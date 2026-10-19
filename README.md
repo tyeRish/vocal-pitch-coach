@@ -1,133 +1,54 @@
-# 🎤 Vocal Pitch Coach
+# 🤘 Vocal Pitch Coach
 
-An interactive web-based vocal training application designed to help you master your vocal range, train different singing styles, and develop your unique voice.
+A vocal coach for singers who want **both**: Freddie Mercury–style clean power and range, *and* Chester Bennington–style grit and screams. It runs in the browser on your laptop or phone, installs like an app, works offline, and has a hands-free **Drive Mode** for car sessions.
 
-## Features
+**Live app:** https://tyerish.github.io/vocal-pitch-coach/ (open on your phone → Share / ⋮ menu → *Add to Home Screen*)
 
-### 🎵 Training Modes
-- **Singing**: Train precision pitch control with tight accuracy requirements
-- **Screaming**: Learn controlled vocal distortion and high-energy vocal production
-- **Mixed Voice**: Blend chest and head voice for versatile vocal power
+## What it does
 
-### 🎯 Vocal Range Detection
-- Automatically detect your lowest and highest notes
-- Identifies your voice type (Bass, Baritone, Tenor, Contralto, Mezzo-Soprano, Soprano)
-- Shows your total vocal range in octaves
-- Helps you understand your natural capabilities
+| Tab | What it's for |
+|---|---|
+| 🎤 **Coach** | Live note, cents meter, **vocal mode** (clean / fry / grit / scream / growl), distortion meter, live **key detection**, scrolling pitch roll, drone to sing against, Freddie/Chester zones overlaid. |
+| 🎯 **Zone** | 1-minute test → your range, **sweet spot** (where to sing most), voice type, speaking pitch, the key you gravitate to, the **best keys** for your voice, you vs. Freddie & Chester, and a **song key fitter**. |
+| 🎵 **Train** | Daily workout + warm-ups, pitch & ear exercises, Freddie-style agility and belt building. Every exercise auto-transposes into your zone. |
+| 🔥 **Lab** | Calibrate the mode detector to your voice, free-play mode meter, and the extreme track: fry → fry-to-clean → grit on pitch → clean/grit switching → fry screams → gutturals → full metal blend. Daily extreme-vocals budget and loudness guard. |
+| 🚗 **Drive** | Eyes-free sessions: spoken instructions, beeps for go/rest, spoken scores. Skips full screams and gutturals. |
+| 📈 **More** | Streak, practice history, range over time, personal bests, technique guide, settings. |
 
-### 📊 Real-Time Feedback
-- **Live Pitch Display**: See the note you're singing in real-time
-- **Cents Display**: Measure how far off you are from the target note (±50 cents)
-- **Visual Indicator**: A guided bar shows your pitch position relative to the target
-- **Accuracy Score**: Percentage-based accuracy rating
-- **Stability Meter**: Track how stable your pitch is
-- **Frequency & Volume**: Technical metrics for detailed feedback
+### How the vocal-mode detection works
+Each audio frame (~45/s) is analysed for:
+- **Pitch & periodicity** — YIN pitch detection (40–1400 Hz, so it hears fry too)
+- **Harmonic-to-noise ratio** — grit fills in the gaps between harmonics
+- **Spectral flatness & centroid** — noise-like vs. tonal, bright scream vs. dark growl
 
-### 🎸 Target Voice Profiles
-Train your voice to sound like legendary singers:
-- **Chester Bennington** (E2 - G4): Dynamic range perfect for emotional vocal delivery
-- **Freddie Mercury** (F#2 - A4): Operatic range with powerful control
-- **Custom**: Set your own target range
+These are compared against *your own* clean tone (Lab → Calibrate). It's a well-informed estimate, not a laryngoscope: it hears the sound you make, not whether your throat is doing it safely.
 
-### 📈 Pitch History Chart
-- Live streaming graph showing your pitch over time
-- Visual comparison with your target range
-- Helps identify patterns and progress
+## Safety
+Extreme vocals done right shouldn't hurt. Pain, burning, coughing or next-day hoarseness mean you pushed too hard — rest. Hoarseness lasting more than 2 weeks: see an ENT. The app enforces a daily extreme budget (default 10 min) and warns when distortion is being forced with volume. A real extreme-vocals coach is worth it.
 
-## How to Use
+## Development
 
-### Getting Started
-1. **Start Listening**: Click the "Start Listening" button to begin training
-2. **Choose Your Mode**: Select between Singing, Screaming, or Mixed Voice
-3. **Pick a Target**: Choose Chester, Freddie, or set Custom targets
-4. **Start Vocalizing**: Sing or scream into your microphone
+```bash
+npm install
+npm run dev        # http://localhost:5173
+npm run phone      # HTTPS on your local network — open the "Network" URL on your phone
+npm test           # unit tests (pitch, mode detection, music theory, scoring, zone analysis)
+npm run smoke      # end-to-end test in headless Chromium with a synthetic voice (needs `npm run dev` running)
+npm run build      # production build → dist/
+```
 
-### Detect Your Vocal Range
-1. Click **"Detect My Range"** button
-2. Sing your **lowest note** for a few seconds
-3. Sing your **highest note** for a few seconds
-4. The app will show you your vocal range and voice type
+Stack: TypeScript + Vite, no UI framework. PWA via `vite-plugin-pwa`. Audio capture via an AudioWorklet so analysis keeps running when the screen dims.
 
-### Training Tips
-- **Warm up**: Always warm up your voice before intensive training
-- **Stay hydrated**: Drink water throughout your training session
-- **Focus on accuracy**: The green zone shows ±25 cents (singing mode) of accuracy
-- **Build gradually**: Start with comfortable notes and expand your range slowly
-- **Monitor stability**: Use the stability meter to track consistency
+```
+src/
+  lib/        music theory, YIN pitch, vocal-mode features & classifier, zone analysis   (pure, unit-tested)
+  audio/      mic engine, reference tones, speech
+  training/   exercise timelines, scoring, live runner
+  data/       exercises, reference singers, local storage
+  ui/ views/  piano roll, DOM helpers, one file per tab
+```
 
-## Understanding the Metrics
-
-### Cents
-One semitone = 100 cents. Shows how many cents sharp (+) or flat (-) you are:
-- **±10 cents**: Excellent accuracy (in-key - green)
-- **±25-50 cents**: Acceptable range depending on mode
-- **Beyond**: Off-key (red)
-
-### Accuracy Score
-Percentage rating based on how close you are to the target pitch:
-- **90-100%**: Perfect
-- **75-90%**: Excellent
-- **50-75%**: Good
-- **Below 50%**: Needs improvement
-
-### Stability
-Measures how consistent your pitch is over the last 10 samples:
-- **90-100%**: Very stable
-- **70-90%**: Stable
-- **50-70%**: Somewhat unstable
-- **Below 50%**: Very unstable
-
-## Voice Types Reference
-
-### Male Voices
-- **Bass**: Lowest male voice (E1-E3)
-- **Baritone**: Middle male voice (A1-A3)
-- **Tenor**: Highest male voice (C2-C4)
-
-### Female Voices
-- **Contralto**: Lowest female voice (F2-F4)
-- **Mezzo-Soprano**: Middle female voice (A2-A4)
-- **Soprano**: Highest female voice (C3-C5)
-
-## Technical Details
-
-### Audio Processing
-- FFT Size: 4096 samples for high accuracy
-- Pitch Detection: Autocorrelation algorithm
-- Update Rate: ~60 FPS for real-time feedback
-- Smoothing: 0.85 for natural pitch tracking
-
-### Browser Requirements
-- Modern browser with Web Audio API support
-- Microphone access (required for training)
-- JavaScript enabled
-
-## Tips for Best Results
-
-1. **Use a quiet environment**: Background noise affects pitch detection
-2. **Position microphone correctly**: Keep it at a consistent distance from your mouth
-3. **Sing with confidence**: Weak vocals may not be detected
-4. **Start with the range detection**: Understanding your range helps set realistic targets
-5. **Practice regularly**: Consistency is key to vocal improvement
-
-## Chester Bennington Voice Profile
-
-Chester Bennington was known for his:
-- **Emotional depth**: Dynamic range from whispers to powerful screams
-- **Technical control**: Precise pitch accuracy even at extreme volumes
-- **Versatility**: Ability to blend singing and screaming seamlessly
-- **Extended range**: Comfortable from deep lows (E2) to high soaring notes (G4)
-
-Training to Chester's profile will help you develop:
-- Better breath control
-- Improved pitch accuracy
-- More powerful vocal projection
-- Greater emotional expression
+Pushing to `main` runs the tests, builds, and deploys to GitHub Pages (`.github/workflows/deploy.yml`).
 
 ## License
-
-MIT License - Feel free to use and modify for your vocal training journey!
-
----
-
-**Remember**: Vocal training should be done carefully. If you experience pain or discomfort, stop immediately and consult a vocal coach or doctor. This app is a practice tool, not a substitute for professional vocal instruction.
+MIT
